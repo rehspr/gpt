@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Details</title>
+</head>
+<body>
+    <header>
+        <button onclick="window.history.back()">Back</button>
+        <h1 id="movie-title"></h1>
+    </header>
+    <main>
+        <div id="movie-details">
+            <p id="movie-overview"></p>
+            <iframe id="movie-player" width="100%" height="500" frameborder="0" allowfullscreen></iframe>
+        </div>
+    </main>
+    <footer>
+        <p>&copy; 2025 StreamFlix</p>
+    </footer>
+    <script>
+        const movieId = new URLSearchParams(window.location.search).get('id');
+        const apiKey = '0b192501e1b0251de14dfe6c5059de19';
+        const apiUrl = 'https://api.themoviedb.org/3';
+
+        async function fetchMovieDetails() {
+            const response = await fetch(`${apiUrl}/movie/${movieId}?api_key=${apiKey}&language=en-US`);
+            const data = await response.json();
+            document.getElementById('movie-title').textContent = data.title;
+            document.getElementById('movie-overview').textContent = data.overview;
+            const embedUrl = `https://vidsrc.xyz/embed/movie/${data.imdb_id}`;
+            document.getElementById('movie-player').src = embedUrl;
+        }
+
+        fetchMovieDetails();
+    </script>
+</body>
+</html>
