@@ -14,7 +14,11 @@
   <main>
     <div id="tv-show-details">
       <p id="tv-show-overview"></p>
-      <div id="seasons"></div>
+      <label for="season-select">Season:</label>
+      <select id="season-select"></select>
+      <label for="episode-select">Episode:</label>
+      <select id="episode-select"></select>
+      <iframe id="tv-show-player" width="100%" height="500" frameborder="0" allowfullscreen></iframe>
     </div>
   </main>
   <footer>
@@ -25,21 +29,68 @@
     const apiKey = '0b192501e1b0251de14dfe6c5059de19';
     const apiUrl = 'https://api.themoviedb.org/3';
 
+    const seasonSelect = document.getElementById('season-select');
+    const episodeSelect = document.getElementById('episode-select');
+    const player = document.getElementById('tv-show-player');
+
     async function fetchTVShowDetails() {
       const response = await fetch(`${apiUrl}/tv/${tvShowId}?api_key=${apiKey}&language=en-US`);
       const data = await response.json();
       document.getElementById('tv-show-title').textContent = data.name;
       document.getElementById('tv-show-overview').textContent = data.overview;
-      const seasonsDiv = document.getElementById('seasons');
+
+      // Populate season dropdown
       data.seasons.forEach(season => {
-        const seasonDiv = document.createElement('div');
-        seasonDiv.innerHTML = `
-          <h3>Season ${season.season_number}</h3>
-          <iframe src="https://vidsrc.xyz/embed/tv?tmdb=${tvShowId}&season=${season.season_number}&episode=1" width="100%" height="500" frameborder="0" allowfullscreen></iframe>
-        `;
-        seasonsDiv.appendChild(seasonDiv);
+        const option = document.createElement('option');
+        option.value = season.season_number;
+        option.textContent = `Season ${season.season_number}`;
+        seasonSelect.appendChild(option);
       });
+
+      // Load episodes for the first season
+      if (data.seasons.length > 0) {
+        seasonSelect.value = data.seasons[0].season_number;
+        await fetchEpisodes(data.seasons[0].season_number);
+      }
     }
+
+    async function fetchEpisodes(seasonNumber) {
+      const response = await fetch(`${apiUrl}/tv/${tvShowId}/season/${seasonNumber}?api_key=${apiKey}&language=en-US`);
+      const data = await response.json();
+
+      // Clear existing options
+      episodeSelect.innerHTML = '';
+
+      // Populate episode dropdown
+      data.episodes.forEach(episode => {
+        const option = document.createElement('option');
+        option.value = episode.episode_number;
+        option.textContent = `Episode ${episode.episode_number}: ${episode.name}`;
+        episodeSelect.appendChild(option);
+      });
+
+      // Load the first episode
+      if (data.episodes.length > 0) {
+        episodeSelect.value = data.episodes[0].episode_number;
+        updatePlayer(seasonNumber, data.episodes[0].episode_number);
+      }
+    }
+
+    function updatePlayer(seasonNumber, episodeNumber) {
+      const embedUrl = `https://vidsrc.xyz/embed/tv?tmdb=${tvShowId}&season=${seasonNumber}&episode=${episodeNumber}`;
+      player.src = embedUrl;
+    }
+
+    seasonSelect.addEventListener('change', async () => {
+      const selectedSeason = seasonSelect.value;
+      await fetchEpisodes(selectedSeason);
+    });
+
+    episodeSelect.addEventListener('change', () => {
+      const selectedSeason = seasonSelect.value;
+      const selectedEpisode = episodeSelect.value;
+      updatePlayer(selectedSeason, selectedEpisode);
+    });
 
     fetchTVShowDetails();
   </script>
