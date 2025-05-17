@@ -14,10 +14,20 @@
   <main>
     <div id="tv-show-details">
       <p id="tv-show-overview"></p>
+
+      <label for="provider-select">Streaming Provider:</label>
+      <select id="provider-select">
+        <option value="vidora">Vidora</option>
+        <option value="vidsrc">VidSrc</option>
+        <option value="godrive">GoDrivePlayer</option>
+      </select>
+
       <label for="season-select">Season:</label>
       <select id="season-select"></select>
+
       <label for="episode-select">Episode:</label>
       <select id="episode-select"></select>
+
       <iframe id="tv-show-player" width="100%" height="500" frameborder="0" allowfullscreen></iframe>
     </div>
   </main>
@@ -31,7 +41,14 @@
 
     const seasonSelect = document.getElementById('season-select');
     const episodeSelect = document.getElementById('episode-select');
+    const providerSelect = document.getElementById('provider-select');
     const player = document.getElementById('tv-show-player');
+
+    const providers = {
+      vidora: (id, season, episode) => `https://vidora.su/embed/tv/${id}/${season}/${episode}`,
+      vidsrc: (id, season, episode) => `https://vidsrc.xyz/embed/tv?tmdb=${id}&season=${season}&episode=${episode}`,
+      godrive: (id, season, episode) => `https://godriveplayer.com/embed/tv?tmdb=${id}&season=${season}&episode=${episode}`
+    };
 
     async function fetchTVShowDetails() {
       const response = await fetch(`${apiUrl}/tv/${tvShowId}?api_key=${apiKey}&language=en-US`);
@@ -40,6 +57,7 @@
       document.getElementById('tv-show-overview').textContent = data.overview;
 
       // Populate season dropdown
+      seasonSelect.innerHTML = '';
       data.seasons.forEach(season => {
         const option = document.createElement('option');
         option.value = season.season_number;
@@ -72,12 +90,15 @@
       // Load the first episode
       if (data.episodes.length > 0) {
         episodeSelect.value = data.episodes[0].episode_number;
-        updatePlayer(seasonNumber, data.episodes[0].episode_number);
+        updatePlayer();
       }
     }
 
-    function updatePlayer(seasonNumber, episodeNumber) {
-      const embedUrl = `https://vidsrc.xyz/embed/tv?tmdb=${tvShowId}&season=${seasonNumber}&episode=${episodeNumber}`;
+    function updatePlayer() {
+      const selectedSeason = seasonSelect.value;
+      const selectedEpisode = episodeSelect.value;
+      const selectedProvider = providerSelect.value;
+      const embedUrl = providers[selectedProvider](tvShowId, selectedSeason, selectedEpisode);
       player.src = embedUrl;
     }
 
@@ -87,9 +108,11 @@
     });
 
     episodeSelect.addEventListener('change', () => {
-      const selectedSeason = seasonSelect.value;
-      const selectedEpisode = episodeSelect.value;
-      updatePlayer(selectedSeason, selectedEpisode);
+      updatePlayer();
+    });
+
+    providerSelect.addEventListener('change', () => {
+      updatePlayer();
     });
 
     fetchTVShowDetails();
