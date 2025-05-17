@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TV Show Details</title>
+</head>
+<body>
+    <header>
+        <button onclick="window.history.back()">Back</button>
+        <h1 id="tv-show-title"></h1>
+    </header>
+    <main>
+        <div id="tv-show-details">
+            <p id="tv-show-overview"></p>
+            <div id="seasons"></div>
+        </div>
+    </main>
+    <footer>
+        <p>&copy; 2025 StreamFlix</p>
+    </footer>
+    <script>
+        const tvShowId = new URLSearchParams(window.location.search).get('id');
+        const apiKey = '0b192501e1b0251de14dfe6c5059de19';
+        const apiUrl = 'https://api.themoviedb.org/3';
+
+        async function fetchTVShowDetails() {
+            const response = await fetch(`${apiUrl}/tv/${tvShowId}?api_key=${apiKey}&language=en-US`);
+            const data = await response.json();
+            document.getElementById('tv-show-title').textContent = data.name;
+            document.getElementById('tv-show-overview').textContent = data.overview;
+            const seasonsDiv = document.getElementById('seasons');
+            data.seasons.forEach(season => {
+                const seasonDiv = document.createElement('div');
+                seasonDiv.innerHTML = `
+                    <h3>Season ${season.season_number}</h3>
+                    <iframe src="https://vidsrc.xyz/embed/tv/${data.imdb_id}/${season.season_number}/1" width="100%" height="500" frameborder="0" allowfullscreen></iframe>
+                `;
+                seasonsDiv.appendChild(seasonDiv);
+            });
+        }
+
+        fetchTVShowDetails();
+    </script>
+</body>
+</html>
